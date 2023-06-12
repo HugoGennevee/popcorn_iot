@@ -3,7 +3,7 @@
     <div class="card mx-auto kiosk-card">
       <div class="card-body">
         <div class="d-flex justify-content-center">
-          <img src="../assets/popcorn.jpg" class="img-fluid w-50 my-4" alt="Popcorn" />
+          <img src="../assets/popcorn.jpg" class="img-fluid w-25 my-4" alt="Popcorn" />
         </div>
 
         <h1 class="card-title text-center text-primary">Cinéma Gaumont</h1>
@@ -42,27 +42,36 @@
           </div>
         </div>
 
-        <div class="center-button" v-if="!carteScannee">
-          <button id="scan_carte" class="btn btn-primary" v-on:click="startScanner">Scanner ma carte</button>
+        <div v-if="!carteScannee" class="center-button">
+          <button id="scan_qrcode" class="btn btn-primary" v-on:click="startScanner">Scanner ma carte</button>
         </div>
 
-        <div  v-if="!carteScannee" id="barcode-scanner"></div>
+        <div v-if="!carteScannee" id="qr-code-scanner"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import Quagga from 'quagga'
+import { Html5Qrcode } from 'html5-qrcode';
 
 export default {
   data() {
     return {
+      qrCodeScanner: null,
       carteScannee: false,
       numeroCarte: '',
       nomClient: '',
       nombrePopcorn: 1,
       showCamera: false,
+    }
+  },
+  mounted() {
+    this.qrCodeScanner = new Html5Qrcode('qr-code-scanner');
+  },
+  beforeDestroy() {
+    if (this.qrCodeScanner) {
+      this.qrCodeScanner.clear();
     }
   },
   methods: {
@@ -78,49 +87,32 @@ export default {
       Quagga.start();
     },
     startScanner() {
-      Quagga.init(
-        {
-          inputStream: {
-            name: 'Live',
-            type: 'LiveStream',
-            target: document.querySelector('#barcode-scanner')
+      this.qrCodeScanner
+        .start({ facingMode: 'environment' }, 
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
           },
-          decoder: {
-            readers: ['ean_reader']
+          (decodedText) => {
+            this.numeroCarte = decodedText;
+            this.carteScannee = true;
+            this.qrCodeScanner.stop();
+          },
+          (errorMessage) => {
           }
-        },
-        function (err) {
-          if (err) {
-            console.log(err)
-            return
-          }
-          Quagga.start()
-        }
-      )
-
-      Quagga.onDetected(this.onBarcodeDetected)
+        )
+        .catch((err) => {
+        });
     },
-
-    onBarcodeDetected(data) {
-      this.numeroCarte = data.codeResult.code
-      this.carteScannee = false;
-      Quagga.stop()
-    }
+    onQrCodeScanned(decodedText) {
+      this.numeroCarte = decodedText
+      this.carteScannee = true
+    },
   }
 }
 </script>
 
 <style scoped>
-.full-screen {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 .kiosk-card {
   max-width: 600px;
