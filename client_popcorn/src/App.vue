@@ -4,12 +4,6 @@ import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
-  <div class="row">  
-    <nav class="d-flex justify-content-center align-items-center">
-      <RouterLink to="/">Accueil</RouterLink>
-      <RouterLink to="/gestion">Gestion</RouterLink>
-    </nav>
-  </div>
   <RouterView />
 </template>
 

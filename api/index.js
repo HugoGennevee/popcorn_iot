@@ -4,7 +4,7 @@ const cors = require('cors');
 const _ = require('lodash');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { v4: uuid } = require('uuid');
+const {v4: uuid} = require('uuid');
 const db = require('./db');
 
 const app = express();
@@ -27,23 +27,29 @@ app.post('/register', async (req, res) => {
     db.query('INSERT INTO user SET ?', user, (err, result) => {
         if (err) throw err;
         res.status(201).json({id: user.id, prenom: user.prenom, nom: user.nom, email: user.email});
-      });
+    });
 });
-  
+
 app.post('/login', (req, res) => {
     db.query('SELECT * FROM user WHERE email = ?', [req.body.email], async (err, results) => {
-      if (err) throw err;
-      const user = results[0];
-      
-      // Comparaison du mot de passe avec le hash stocké dans la BDD
-      const match = await bcrypt.compare(req.body.password, user.password);
-      
-      if (match) {
-        const token = jwt.sign({ id: user.id }, 'popcorn_iot', { expiresIn: '1h' });
-        res.json({token: token});
-      } else {
-        res.status(401).send('Email ou mot de passe incorrect');
-      }
+        if (err) throw err;
+        const user = results[0];
+
+        if (user !== undefined) {
+            const match = await bcrypt.compare(req.body.password, user.password);
+
+            if (match) {
+                const token = jwt.sign({id: user.id}, 'popcorn_iot', {expiresIn: '1h'});
+                // res.json({token: token});
+                res.json({id: user.id});
+
+                return;
+            } else {
+                res.status(401).send('Email ou mot de passe incorrect');
+            }
+        } else {
+            res.status(401).send('Email ou mot de passe incorrect');
+        }
     });
 });
 
@@ -53,7 +59,6 @@ app.post('/abonnement/:userId', async (req, res) => {
     try {
         let user = await getUser(userId);
 
-        console.log(user);
         if (user !== undefined) {
             let currentDateTime = new Date();
 
@@ -103,49 +108,29 @@ app.delete('/abonnement/:id', (req, res) => {
     });
 });
 
-app.get('/users', (req, res) => {
+app.get('/user', (req, res) => {
     db.query('SELECT * FROM user', (err, results) => {
         if (err) throw err;
         res.json(results);
     });
 });
 
-app.post('/users', (req, res) => {
-    const user = {
-        id: uuid(),
-        username: req.body.username,
-        email: req.body.email
-    };
-
-    db.query('INSERT INTO user SET ?', user, (err, result) => {
-        if (err) throw err;
-        res.status(201).json(user);
-    });
-});
-
-app.get('/users/:id', (req, res) => {
+app.get('/user/:id', (req, res) => {
     db.query('SELECT * FROM user WHERE id = ?', [req.params.id], (err, results) => {
         if (err) throw err;
-        res.json(results[0]);
+        res.status(201).json({id: results[0].id, prenom: results[0].prenom, nom: results[0].nom});
     });
 });
 
-app.put('/users/:id', (req, res) => {
-    const updatedUser = {
-        username: req.body.username,
-        email: req.body.email
-    };
-
-    db.query('UPDATE user SET ? WHERE id = ?', [updatedUser, req.params.id], (err, result) => {
+app.get('/user/:id/abonnement', (req, res) => {
+    db.query('SELECT * FROM abonnement WHERE user = ?', [req.params.id], (err, results) => {
         if (err) throw err;
-        res.json(updatedUser);
-    });
-});
 
-app.delete('/users/:id', (req, res) => {
-    db.query('DELETE FROM user WHERE id = ?', [req.params.id], (err, result) => {
-        if (err) throw err;
-        res.status(204).send();
+        if (results.length > 0) {
+            res.status(201).json({id: results[0].id, nbUtilisationsRestantes: results[0].nb_utilisations_restantes});
+        } else {
+            res.status(401).send("Aucun abonnement associé à cette utilisateur");
+        }
     });
 });
 

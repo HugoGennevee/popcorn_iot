@@ -2,28 +2,40 @@
     <div id="app" class="container py-5 full-screen">
         <div class="card mx-auto kiosk-card">
             <div class="card-body">
-                <div class="about">
-                    <h1 class="card-title text-center text-primary">Gestion de mon compte</h1>
-                    <p class="text-center">Votre QRCode contient votre abonnement ainsi que vos achats. Veuillez à ne pas le perdre.</p>
-                    <div class="row justify-content-center">
-                        <div class="col-md-6">
-                            <div class="input-group mb-3">
-                                <input id="client-number-input" v-model="clientNumber" type="text" class="form-control"
-                                    placeholder="Saisissez votre numéro client">
-                                <div class="text-center input-group-append">
-                                    <button @click="generateQrCode" class="btn btn-outline-primary m-2">Générer le QR
-                                        code</button>
-                                    <button @click="createNewClient" class="btn btn-outline-success m-2">Générer un nouveau numéro
-                                        client</button>
-                                </div>
-                            </div>
-                            <div v-if="qrData" class="text-center">
-                                <qrcode-vue ref="qrcode" :value="qrData" :size="size" level="H"></qrcode-vue>
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn text-white fa-bold" v-on:click="moveToLoginPage">&cross;</button>
+                    </div>
+                </div>
 
-                                <button @click="downloadQrCode" class="btn btn-outline-info m-2">Télécharger le QR
-                                    code</button>
-                            </div>
+                <div class="d-flex justify-content-center">
+                    <img src="../assets/popcorn.jpg" class="img-fluid w-25 my-4" alt="Popcorn"/>
+                </div>
+
+                <h1 class="card-title text-center text-primary">Cinéma Gaumont</h1>
+
+                <div class="row">
+                    <nav class="d-flex justify-content-center align-items-center">
+                        <button class="btn" v-on:click="moveToAbonnementPage"><a class="text-primary fa-italic fa-underline">Abonnement</a></button>
+                        <button class="btn btn-primary text-white fa-italic mx-2" v-on:click="moveToQrCodePage">QrCode</button>
+                    </nav>
+                </div>
+
+                <h2 class="text-center mt-4">Gestion de mon compte</h2>
+                <p class="text-center">Votre QRCode contient votre abonnement ainsi que vos achats. <br> Veuillez à ne pas le perdre.</p>
+                <div class="row">
+                    <div v-if="qrData" class="text-center">
+                        <div class="col-12">
+                            <qrcode-vue ref="qrcode" :value="qrData" :size="size" level="H"></qrcode-vue>
                         </div>
+
+                        <div class="col-12 text-center">
+                            <button @click="downloadQrCode" class="btn btn-outline-info m-2">Télécharger le QR Code</button>
+                        </div>
+                    </div>
+
+                    <div v-else class="col text-center">
+                        <button @click="generateQrCode" class="btn btn-outline-primary m-2">Générer le QR Code</button>
                     </div>
                 </div>
             </div>
@@ -36,6 +48,7 @@
 import QrcodeVue from 'qrcode.vue'
 import domToImage from 'dom-to-image'
 import download from 'downloadjs'
+import axios from "axios";
 
 export default {
     data() {
@@ -43,19 +56,37 @@ export default {
             clientNumber: '',
             qrData: '',
             size: 200,
+            user: null,
+            abonnement: null,
         }
     },
     components: {
         QrcodeVue
     },
+    mounted() {
+        this.getUser(this.$route.params.userId);
+    },
     methods: {
-        generateQrCode() {
-            this.qrData = this.clientNumber
+        async getUser(id) {
+            try {
+                const response = await axios.get('http://localhost:3000/user/' + id);
+                this.user = response.data;
+
+                await this.getAbonnementUser();
+            } catch (error) {
+                console.error(error);
+            }
         },
-        createNewClient() {
-            const newClientNumber = Math.floor(Math.random() * 1000000)
-            this.clientNumber = newClientNumber.toString()
-            this.generateQrCode()
+        async getAbonnementUser() {
+            try {
+                const response = await axios.get('http://localhost:3000/user/' + this.user.id + '/abonnement');
+                this.abonnement = response.data;
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        generateQrCode() {
+            this.qrData = this.user.id;
         },
         async downloadQrCode() {
             const node = document.querySelector("#app > div > div > div > div > div > div.text-center > canvas")
@@ -65,6 +96,15 @@ export default {
             } catch (err) {
             }
         },
+        moveToAbonnementPage() {
+            this.$router.push({name: 'abonnement', params: {userId: this.user.id}});
+        },
+        moveToQrCodePage() {
+            this.$router.push({name: 'qrcode', params: {userId: this.user.id}});
+        },
+        moveToLoginPage() {
+            this.$router.push({name: 'home'});
+        }
     }
 }
 </script>
@@ -88,4 +128,3 @@ export default {
 .container {
     max-width: 600px;
 }</style>
-  
