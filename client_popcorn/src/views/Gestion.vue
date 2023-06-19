@@ -89,7 +89,7 @@ export default {
             this.qrData = this.user.id;
         },
         async downloadQrCode() {
-            const node = document.querySelector("#app > div > div > div > div > div > div.text-center > canvas")
+            const node = document.querySelector("#app > div > div > div:nth-child(7) > div > div:nth-child(1)")
             try {
                 const dataUrl = await domToImage.toPng(node)
                 download(dataUrl, 'abonnement_' + this.qrData + '.png')
