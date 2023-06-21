@@ -11,23 +11,28 @@
 
         <transition name="fade">
           <div v-if="!carteScannee" key="scanner">
-
             <p>
-                <small class="text-muted">
-                    Veuillez scanner votre carte pour obtenir votre PopCorn.
-                </small>
+              <small class="text-muted">
+                Veuillez scanner votre carte pour obtenir votre PopCorn.
+              </small>
             </p>
 
             <p>
-                <small class="text-muted">
-                    Pour obtenir du PopCorn, vous devez avoir rechargé préalablement votre carte.
-                </small>
+              <small class="text-muted">
+                Pour obtenir du PopCorn, vous devez avoir rechargé préalablement votre carte.
+              </small>
             </p>
 
-        
             <div class="center-button my-4">
               <button id="scan_qrcode" class="btn btn-primary" v-on:click="startScanner">
                 Scanner ma carte
+              </button>
+            </div>
+
+            <div class="center-button my-4">
+              <input type="file" id="upload_qrcode" ref="qrcodeInput" @change="readQrCode" hidden />
+              <button id="upload_qrcode_button" class="btn btn-primary" @click="uploadQrCode">
+                Télécharger mon QrCode
               </button>
             </div>
 
@@ -125,7 +130,33 @@ export default {
           this.dispensing = false
         }, 3000)
       }
+    },
+    uploadQrCode() {
+      this.$refs.qrcodeInput.click()
+    },
+    readQrCode(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.qrCodeScanner
+          .scanFile(file, true)
+          .then((decodedText) => {
+            this.numeroCarte = decodedText
+            this.carteScannee = true
+          })
+          .catch((err) => {
+            console.error(err)
+          })
+      }
     }
+  },
+  watch: {
+    carteScannee() {
+      if (this.carteScannee) {
+        console.log('La carte est scannée...')
+      } else {
+        console.log('La carte n\'est pas scannée...')
+      }
+    },
   }
 }
 </script>
