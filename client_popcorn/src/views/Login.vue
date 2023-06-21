@@ -60,6 +60,7 @@ export default {
             .catch(function (error) {})
             .finally(function () {
                 if (responseResult !== null) {
+                    localStorage.setItem('token', responseResult.token);
                     that.$router.push({name: 'abonnement', params: {userId: responseResult.id}});
                 } else {
                     alert('Information de connexion incorrecte !')

@@ -69,7 +69,9 @@ export default {
     methods: {
         async getUser(id) {
             try {
-                const response = await axios.get('http://localhost:3000/user/' + id);
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`http://localhost:3000/user/${id}`, {headers: {'Authorization': `Bearer ${token}`}});
+
                 this.user = response.data;
 
                 await this.getAbonnementUser();
@@ -79,7 +81,9 @@ export default {
         },
         async getAbonnementUser() {
             try {
-                const response = await axios.get('http://localhost:3000/user/' + this.user.id + '/abonnement');
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`http://localhost:3000/user/${this.user.id}/abonnement`, {headers: {'Authorization': `Bearer ${token}`}});
+
                 this.abonnement = response.data;
             } catch (error) {
                 console.error(error);
@@ -103,6 +107,7 @@ export default {
             this.$router.push({name: 'qrcode', params: {userId: this.user.id}});
         },
         moveToLoginPage() {
+            localStorage.removeItem('token');
             this.$router.push({name: 'home'});
         }
     }

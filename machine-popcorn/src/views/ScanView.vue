@@ -32,7 +32,7 @@
             <div class="center-button my-4">
               <input type="file" id="upload_qrcode" ref="qrcodeInput" @change="readQrCode" hidden />
               <button id="upload_qrcode_button" class="btn btn-primary" @click="uploadQrCode">
-                Télécharger mon QrCode
+                Upload mon QrCode
               </button>
             </div>
 

@@ -10,7 +10,47 @@ const db = require('./db');
 const app = express();
 const saltRounds = 10;
 
-app.use(cors());
+const authenticateJWT = (req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
+
+    const authHeader = req.headers.authorization;
+    const whitelist = ['/register', '/login'];
+
+    if (whitelist.includes(req.path)) {
+        return next();
+    }
+
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+
+        jwt.verify(token, 'popcorn_iot', (err, user) => {
+            if (err) {
+                return res.sendStatus(403);
+            }
+
+            req.user = user;
+            next();
+        });
+    } else {
+        res.sendStatus(401);
+    }
+};
+
+app.use(authenticateJWT);
+
+const corsOptions = {
+    origin: '*',
+    optionsSuccessStatus: 200,
+    methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+}
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 
 /* --- ENDPOINT API --- */
@@ -40,8 +80,7 @@ app.post('/login', (req, res) => {
 
             if (match) {
                 const token = jwt.sign({id: user.id}, 'popcorn_iot', {expiresIn: '1h'});
-                // res.json({token: token});
-                res.json({id: user.id});
+                res.json({id: user.id, token: token});
 
                 return;
             } else {
