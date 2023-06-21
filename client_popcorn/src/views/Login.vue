@@ -53,7 +53,7 @@ export default {
             axios.post('http://localhost:3000/login', {
                 email: this.email,
                 password: this.password
-            })
+            }, {headers: { skipAuth: true }})
             .then(function (response) {
                 responseResult = response.data;
             })

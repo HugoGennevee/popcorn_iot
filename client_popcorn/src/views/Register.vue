@@ -71,7 +71,7 @@ export default {
                 prenom: this.prenom,
                 email: this.email,
                 password: this.password
-            })
+            }, {headers: { skipAuth: true }})
             .then(function (response) {
                 responseResult = response.data;
             })

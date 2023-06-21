@@ -16,7 +16,7 @@ const authenticateJWT = (req, res, next) => {
     }
 
     const authHeader = req.headers.authorization;
-    const whitelist = ['/register', '/login'];
+    const whitelist = ['/register', '/login', '/machine/check'];
 
     if (whitelist.includes(req.path)) {
         return next();
@@ -44,7 +44,7 @@ const corsOptions = {
     origin: '*',
     optionsSuccessStatus: 200,
     methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "skipAuth"],
     credentials: true,
 }
 
@@ -132,6 +132,7 @@ app.get('/abonnement/:id', (req, res) => {
 app.put('/abonnement/:id', (req, res) => {
     const updatedAbonnement = {
         nb_utilisations_restantes: req.body.nbUtilisationsRestantes,
+        updated_at: new Date(),
     };
 
     db.query('UPDATE abonnement SET ? WHERE id = ?', [updatedAbonnement, req.params.id], (err, result) => {
@@ -173,11 +174,66 @@ app.get('/user/:id/abonnement', (req, res) => {
     });
 });
 
+app.post('/machine/check', async (req, res) => {
+    const userId = req.body.id;
+
+    try {
+        let user = await getUser(userId);
+
+        if (user !== undefined) {
+            let abonnement = await getAbonnementOfUser(userId);
+
+            if (abonnement !== undefined) {
+                const token = jwt.sign({id: user.id}, 'popcorn_iot', {expiresIn: '1h'});
+                res.status(201).json({nom: user.prenom, abonnement: abonnement.id, nombreRestanteUtilisation: abonnement.nb_utilisations_restantes, token: token});
+            } else {
+                res.status(401).send("Action impossible !");
+            }
+        } else {
+            res.status(401).send("Action impossible !");
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Server error');
+    }
+});
+
+app.post('/machine/use', async (req, res) => {
+    const abonnementId = req.body.id;
+
+    try {
+        const updatedAbonnement = {
+            nb_utilisations_restantes: req.body.nbUtilisationsRestantes - 1,
+            updated_at: new Date(),
+        };
+
+        db.query('UPDATE abonnement SET ? WHERE id = ?', [updatedAbonnement, abonnementId], (err, result) => {
+            if (err) throw res.status(500).send('Server error');
+            res.status(201).json({status: true});
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('Server error');
+    }
+});
+
 /* --- FONCTION --- */
 
 const getUser = (id) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM user WHERE id = ?', [id], (err, results) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(results[0]);
+        });
+    });
+}
+
+const getAbonnementOfUser = (id) => {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * FROM abonnement WHERE user = ?', [id], (err, results) => {
             if (err) {
                 reject(err);
                 return;
