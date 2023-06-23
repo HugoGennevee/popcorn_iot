@@ -36,37 +36,49 @@
 </template>
 
 <script>
+// Importation du module axios pour réaliser des requêtes HTTP
 import axios from 'axios';
 
 export default {
+    // Initialisation des données du composant
     data() {
         return {
-            email: null,
-            password: null,
+            email: null, // Adresse e-mail entrée par l'utilisateur
+            password: null, // Mot de passe entré par l'utilisateur
         }
     },
     methods: {
+        // Méthode pour gérer la connexion de l'utilisateur
         login() {
-            let that = this;
-            let responseResult = null;
+            let that = this; // Référence à l'instance actuelle du composant
+            let responseResult = null; // Résultat de la requête HTTP
 
+            // Envoi d'une requête HTTP POST au serveur pour se connecter
             axios.post('http://localhost:3000/login', {
-                email: this.email,
-                password: this.password
+                email: this.email, // Envoi de l'adresse e-mail
+                password: this.password // Envoi du mot de passe
             }, {headers: { skipAuth: true }})
-            .then(function (response) {
-                responseResult = response.data;
-            })
-            .catch(function (error) {})
-            .finally(function () {
-                if (responseResult !== null) {
-                    localStorage.setItem('token', responseResult.token);
-                    that.$router.push({name: 'abonnement', params: {userId: responseResult.id}});
-                } else {
-                    alert('Information de connexion incorrecte !')
-                }
-            });
+                .then(function (response) {
+                    // Si la requête a réussi, sauvegarde du résultat
+                    responseResult = response.data;
+                })
+                .catch(function (error) {
+                    // Gestion des erreurs
+                })
+                .finally(function () {
+                    // Après la requête, qu'elle ait réussi ou non
+                    if (responseResult !== null) {
+                        // Si la requête a réussi, sauvegarde du token dans le local storage
+                        localStorage.setItem('token', responseResult.token);
+                        // Et redirection vers la page d'abonnement
+                        that.$router.push({name: 'abonnement', params: {userId: responseResult.id}});
+                    } else {
+                        // Si la requête a échoué, affichage d'un message d'erreur
+                        alert('Information de connexion incorrecte !')
+                    }
+                });
         },
+        // Méthode pour rediriger l'utilisateur vers la page d'inscription
         moveToRegisterPage() {
             this.$router.push('/register');
         }

@@ -77,137 +77,145 @@
   </div>
 </template>
 
-
 <script>
+// Importation des modules nécessaires
 import { Html5Qrcode } from 'html5-qrcode'
 import axios from 'axios'
 
 export default {
-  data() {
-    return {
-      carteScannee: false,
-      qrCodeScanner: null,
-      nom: null,
-      popcornPacks: 0,
-      abonnement: null,
-      dispensing: false
-    }
-  },
-  mounted() {
-    this.qrCodeScanner = new Html5Qrcode('qr-code-scanner')
-  },
-  beforeDestroy() {
-    if (this.qrCodeScanner) {
-      this.qrCodeScanner.clear()
-    }
-  },
-  methods: {
-    startScanner() {
-      localStorage.removeItem('token')
-
-      this.carteScannee = false
-      this.qrCodeScanner
-        .start(
-          { facingMode: 'environment' },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-          },
-          (decodedText) => {
-            this.numeroCarte = decodedText
-            this.carteScannee = true
-            this.qrCodeScanner.stop()
-
-            this.requestDataFromCard(decodedText)
-          },
-          (errorMessage) => {}
-        )
-        .catch((err) => {})
-    },
-    onQrCodeScanned(decodedText) {
-      this.numeroCarte = decodedText
-      this.carteScannee = true
-    },
-    dispensePopcorn() {
-      if (this.popcornPacks > 0) {
-        try {
-          let that = this
-          let responseResult = null
-          const token = localStorage.getItem('token')
-
-          axios
-            .post(
-              'http://localhost:3000/machine/use',
-              { id: this.abonnement, nbUtilisationsRestantes: this.popcornPacks },
-              { headers: { Authorization: `Bearer ${token}` } }
-            )
-            .then(function (response) {
-              responseResult = response.data
-            })
-            .catch(function (error) {})
-            .finally(function () {
-              if (responseResult.status === true) {
-                that.popcornPacks -= 1
-              } else {
-                alert('Erreur pendant le scan !')
-              }
-            })
-        } catch (error) {
+    data() {
+        return {
+            carteScannee: false, // Etat du scan de la carte
+            qrCodeScanner: null, // Objet pour le scanner de QR Code
+            nom: null, // Nom de l'utilisateur
+            popcornPacks: 0, // Nombre de packs de popcorn
+            abonnement: null, // Abonnement de l'utilisateur
+            dispensing: false // Etat de la distribution du popcorn
         }
-
-        this.dispensing = true
-        setTimeout(() => {
-          this.dispensing = false
-        }, 3000)
-      } else {
-        alert("Vous n'avez plus assez de crédit ! Rechargez votre compte pour continuer.")
-      }
     },
-    uploadQrCode() {
-      this.$refs.qrcodeInput.click()
+    // Initialisation du scanner QR Code au montage du composant
+    mounted() {
+        this.qrCodeScanner = new Html5Qrcode('qr-code-scanner')
     },
-    readQrCode(event) {
-      const file = event.target.files[0]
-      if (file) {
-        this.qrCodeScanner
-          .scanFile(file, true)
-          .then((decodedText) => {
-            this.numeroCarte = decodedText
-            this.carteScannee = true
-
-            this.requestDataFromCard(decodedText)
-          })
-          .catch((err) => {
-            console.error(err)
-          })
-      }
+    // Nettoyage du scanner QR Code avant la destruction du composant
+    beforeDestroy() {
+        if (this.qrCodeScanner) {
+            this.qrCodeScanner.clear()
+        }
     },
-    requestDataFromCard(id) {
-      let that = this
-      let responseResult = null
+    methods: {
+        // Démarrage du scanner
+        startScanner() {
+            localStorage.removeItem('token')
 
-      axios
-        .post('http://localhost:3000/machine/check', { id: id }, { headers: { skipAuth: true } })
-        .then(function (response) {
-          responseResult = response.data
-        })
-        .catch(function (error) {})
-        .finally(function () {
-          if (responseResult !== null) {
-            that.nom = responseResult.nom
-            that.abonnement = responseResult.abonnement
-            that.popcornPacks = responseResult.nombreRestanteUtilisation
+            this.carteScannee = false
+            this.qrCodeScanner
+                .start(
+                    { facingMode: 'environment' },
+                    {
+                        fps: 10, // 10 images par seconde
+                        qrbox: { width: 250, height: 250 } // Taille de la zone de scan
+                    },
+                    (decodedText) => { // Callback quand un QR Code est scanné
+                        this.numeroCarte = decodedText
+                        this.carteScannee = true
+                        this.qrCodeScanner.stop() // Arrête le scanner
 
-            localStorage.setItem('token', responseResult.token)
-          } else {
-            alert('Erreur pendant le scan !')
-          }
-        })
+                        this.requestDataFromCard(decodedText) // Récupère les données de l'utilisateur
+                    },
+                    (errorMessage) => {} // Callback quand une erreur se produit
+                )
+                .catch((err) => {}) // Gestion des erreurs
+        },
+        // Distribution du popcorn
+        dispensePopcorn() {
+            if (this.popcornPacks > 0) { // S'il y a assez de popcorn
+                try {
+                    let that = this
+                    let responseResult = null
+                    const token = localStorage.getItem('token')
+
+                    // Envoie une requête POST pour signaler l'utilisation de la machine
+                    axios
+                        .post(
+                            'http://localhost:3000/machine/use',
+                            { id: this.abonnement, nbUtilisationsRestantes: this.popcornPacks },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                        )
+                        .then(function (response) { // Mise à jour de la réponse
+                            responseResult = response.data
+                        })
+                        .catch(function (error) {}) // Gestion des erreurs
+                        .finally(function () { // Actions finales
+                            if (responseResult.status === true) {
+                                that.popcornPacks -= 1 // Diminue le nombre de packs de popcorn
+                            } else {
+                                alert('Erreur pendant le scan !') // Affiche une alerte si le scan a échoué
+                            }
+                        })
+                } catch (error) {
+                }
+
+                // Déclenche la distribution de popcorn
+                this.dispensing = true
+                // Arrête la distribution de popcorn après 3 secondes
+                setTimeout(() => {
+                    this.dispensing = false
+                }, 3000)
+            } else {
+                // Affiche une alerte si le crédit est insuffisant
+                alert("Vous n'avez plus assez de crédit ! Rechargez votre compte pour continuer.")
+            }
+        },
+        // Importe un QR Code depuis un fichier
+        uploadQrCode() {
+            this.$refs.qrcodeInput.click()
+        },
+        // Lit le QR Code importé
+        readQrCode(event) {
+            const file = event.target.files[0]
+            if (file) {
+                this.qrCodeScanner
+                    .scanFile(file, true)
+                    .then((decodedText) => {
+                        this.numeroCarte = decodedText
+                        this.carteScannee = true
+
+                        this.requestDataFromCard(decodedText) // Récupère les données de l'utilisateur
+                    })
+                    .catch((err) => {
+                        console.error(err)
+                    })
+            }
+        },
+        // Envoie une requête POST pour récupérer les données de l'utilisateur
+        requestDataFromCard(id) {
+            let that = this
+            let responseResult = null
+
+            axios
+                .post('http://localhost:3000/machine/check', { id: id }, { headers: { skipAuth: true } })
+                .then(function (response) {
+                    responseResult = response.data
+                })
+                .catch(function (error) {})
+                .finally(function () {
+                    if (responseResult !== null) {
+                        that.nom = responseResult.nom
+                        that.abonnement = responseResult.abonnement
+                        that.popcornPacks = responseResult.nombreRestanteUtilisation
+
+                        localStorage.setItem('token', responseResult.token) // Stocke le token de l'utilisateur
+                    } else {
+                        alert('Erreur pendant le scan !') // Affiche une alerte si le scan a échoué
+                    }
+                })
+        },
+        // Recharge la page
+        backToHome() {
+            location.reload();
+        }
     },
-    backToHome() {
-      location.reload();
-    }
-  },
 }
 </script>
 

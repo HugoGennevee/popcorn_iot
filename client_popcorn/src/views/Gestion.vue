@@ -42,8 +42,7 @@
         </div>
     </div>
 </template>
-  
-  
+
 <script>
 import QrcodeVue from 'qrcode.vue'
 import domToImage from 'dom-to-image'
