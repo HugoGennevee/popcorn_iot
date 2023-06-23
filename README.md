@@ -1,22 +1,76 @@
-# Mon Super Repo
+# Machine à popcorn
 
-Ce repo contient trois projets principaux :
+Ce projet est une solution tripartite pour la gestion d'un système de machine à popcorn avec scanner qui utilise VueJS, NodeJS et la technologie de QR Code.
 
-1. `vue-projet1` : Il s'agit d'une application Vue.js qui fait [...]
-2. `vue-projet2` : Il s'agit d'une autre application Vue.js qui fait [...]
-3. `api-node-express` : Il s'agit d'une API REST construite avec Node.js et Express.js qui fait [...]
+**Ce projet a été réalisé dans un cadre scolaire et est destiné à des fins éducatives uniquement.**
+
+
+## Fonctionnalités
+
+- Gestion de compte et d'abonnement via un site web
+- Une machine à popcorn qui peut scanner des cartes/QrCodes et fournir des popcorns
 
 ## Prérequis
 
-Vous aurez besoin des éléments suivants installés sur votre machine pour pouvoir exécuter ces projets :
+- Node.js
+- npm
+- MySQL
 
-1. [Node.js](https://nodejs.org/) (version 14.0 ou supérieure)
-2. [npm](https://www.npmjs.com/) (6.14.4 ou supérieure)
+## Installation
 
-## Instructions pour l'installation
+Clonez le dépôt : ```git clone https://github.com/HugoGennevee/popcorn_iot```
 
-Chaque sous-projet peut être installé en suivant ces étapes :
+Pour l'api :
+1. Naviguez vers le dossier de l'api :
+   ```cd api```
+2. Installez les dépendances :
+   ```npm install```
+3. Configurez l'adresse et le compte de la base de données dans le fichier ```db.js```
+4. Exécutez l'api :
+   ```npm start```
 
-```bash
-cd <nom_du_projet>
-npm install
+Pour le site web :
+1. Naviguez vers le dossier du site web :
+   ```cd client_popcorn```
+2. Installez les dépendances :
+   ```npm install```
+3. Exécutez l'application en mode développement :
+   ```npm run dev```
+4. Visitez `http://localhost:5173` pour accéder à l'application.
+
+Pour la simulation de la machine de popcorn :
+1. Naviguez vers le dossier de la machine de popcorn :
+   ```cd machine-popcorn```
+2. Installez les dépendances :
+   ```npm install```
+3. Exécutez l'application en mode développement :
+   ```npm run dev```
+4. Visitez `http://localhost:5174` pour accéder à l'application.
+
+Pour la base de données : un fichier ```BDD.sql``` est disponible à la racine du projet
+
+## Le fonctionnement global de la solution
+
+La solution est composée de trois éléments principaux :
+
+1. Un site de gestion de compte/abonnement créé avec Vue.js 3. C'est ici que les utilisateurs peuvent gérer leur compte et abonnement et générer leur QR Code.
+2. Une API basée sur Node.js qui assure la liaison entre le site web, la base de données et la machine à popcorn. Elle permet d'enregistrer les données des utilisateurs, de gérer les abonnements et d'interagir avec la machine à popcorn.
+3. Une machine à popcorn qui peut scanner des QR Codes. Lorsqu'un QR Code est scanné, la machine vérifie l'abonnement de l'utilisateur et fournit les popcorns correspondants.
+
+## Technologies utilisées
+
+- Vue.js 3
+- Vue-router
+- Vue Vite
+- MySQL
+- Bootstrap 5
+- Axios
+- NodeJS
+- Cors
+- JWT
+
+## Structure du projet
+
+- `/api`: Contient la solution de l'API
+- `/client_popcorn`: Contient la solution du site web client
+- `/machine-popcorn`: Contient la solution de la simulation de la machine de popcorn
