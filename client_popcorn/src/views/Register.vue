@@ -66,6 +66,8 @@ export default {
             let that = this;
             let responseResult = null;
 
+            let accountCreated = false;
+
             axios.post('http://localhost:3000/register', {
                 nom: this.nom,
                 prenom: this.prenom,
@@ -74,10 +76,19 @@ export default {
             }, {headers: { skipAuth: true }})
             .then(function (response) {
                 responseResult = response.data;
+                accountCreated = true;
             })
-            .catch(function (error) {})
+            .catch(function (error) {
+                if (error.response && error.response.status === 409) {
+                    alert("L'adresse e-mail est déjà utilisée. Veuillez en utiliser une autre.");
+                } else {
+                    alert('Une erreur serveur est survenue ! Réessayer ultérieurement .');
+                }
+            })
             .finally(function () {
-                that.$router.push('/');
+                if (accountCreated) {
+                    that.$router.push('/');
+                }
             });
         },
         moveToLoginPage() {

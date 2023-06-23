@@ -47,7 +47,9 @@ Pour la simulation de la machine de popcorn :
    ```npm run dev```
 4. Visitez `http://localhost:5174` pour accéder à l'application.
 
-Pour la base de données : un fichier ```BDD.sql``` est disponible à la racine du projet
+Pour la base de données : 
+1. Créer une base de données avec le nom ```popcorn```
+2. un fichier ```BDD.sql``` est disponible à la racine du projet pour le schéma de la base de données
 
 ## Le fonctionnement global de la solution
 

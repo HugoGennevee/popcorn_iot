@@ -56,17 +56,29 @@ app.use(express.json());
 /* --- ENDPOINT API --- */
 
 app.post('/register', async (req, res) => {
-    let user = {
-        id: uuid(),
-        prenom: req.body.prenom,
-        nom: req.body.nom,
-        email: req.body.email,
-        password: await bcrypt.hash(req.body.password, saltRounds) // Hash du mot de passe
-    }
+    // Vérifier si un utilisateur avec le même e-mail existe déjà
+    db.query('SELECT * FROM user WHERE email = ?', [req.body.email], async (err, results) => {
+        if (err) throw res.status(500).send('Server error');
+        const user = results[0];
 
-    db.query('INSERT INTO user SET ?', user, (err, result) => {
-        if (err) throw err;
-        res.status(201).json({id: user.id, prenom: user.prenom, nom: user.nom, email: user.email});
+        if (user) {
+            // Un utilisateur avec le même e-mail existe déjà, renvoyer une erreur
+            res.status(409).send("L'adresse e-mail est déjà utilisée. Veuillez en utiliser une autre.");
+        } else {
+            // Aucun utilisateur avec le même e-mail n'a été trouvé, continuer avec l'inscription
+            let user = {
+                id: uuid(),
+                prenom: req.body.prenom,
+                nom: req.body.nom,
+                email: req.body.email,
+                password: await bcrypt.hash(req.body.password, saltRounds) // Hash du mot de passe
+            }
+
+            db.query('INSERT INTO user SET ?', user, (err, result) => {
+                if (err) throw err;
+                res.status(201).json({id: user.id, prenom: user.prenom, nom: user.nom, email: user.email});
+            });
+        }
     });
 });
 
